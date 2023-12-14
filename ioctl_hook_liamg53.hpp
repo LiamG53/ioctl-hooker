@@ -1,0 +1,82 @@
+#include "device.hpp"
+
+namespace ioctl_hooker
+{
+	// ioctl cheats driver handler
+
+	namespace shellcodes
+	{
+		// ioctl internal fortnite hook shellcode
+
+		std::uintptr_t rwGDI_hacks[98] =
+		{
+			0x6B, 0x73, 0x64, 0x6C, 0x66,
+			0x6B, 0x61, 0x6F, 0x69, 0x6B, 
+			0x77, 0x49, 0x23, 0x28, 0x2A,
+			0x52, 0x23, 0x28, 0x4A, 0x4B, 
+			0x41, 0x4E, 0x46, 0x49, 0x41,
+			0x46, 0x56, 0x48, 0x45, 0x28,
+			0x49, 0x49, 0x29, 0x40, 0x28, 
+			0x21, 0x29, 0x5F, 0x21, 0x28,
+			0x24, 0x40, 0x40, 0x28, 0x29, // TODO: fix overflow on certain sizes
+			0x24, 0x40, 0x24, 0x3F, 0x40, 
+			0x24, 0x3E, 0x4C, 0x40, 0x3A, 
+			0x24, 0x40, 0x3C, 0x24, 0x40,
+			0x24, 0x41, 0x41, 0x41, 0x41,
+			0x50, 0x52, 0x23, 0x49, 0x24, 
+			0x23, 0x28, 0x23, 0x24, 0x4D, 
+			0x50, 0x43, 0x23, 0x24, 0x55, 
+			0x49, 0x45, 0x45, 0x2A, 0x23,
+			0x24, 0x28, 0x23, 0x40, 0x29, 
+			0x28, 0x50, 0x85, 0x90, 0x93,
+			0x10, 0x80, 0xC3 // TODO: improve this ending
+		};
+	}
+
+	// function
+	void (*ioctl_create_hook)(	void*,
+		void*,	void*	);
+	
+	// load our shellcode into the function
+	void init(
+
+	)
+	{
+		ioctl_create_hook = (decltype(ioctl_create_hook))(malloc(
+			sizeof(shellcodes::rwGDI_hacks))
+		);
+		
+		if (
+			!ioctl_create_hook
+		)
+		{
+			// memory allocation error
+			return;
+		}
+
+		// once memory is allocated we can set our shellcode there
+		ioctl_create_hook = (decltype(ioctl_create_hook))(
+			shellcodes::rwGDI_hacks
+		);
+	}
+}
+
+// really doesnt matter how these arguments are passed, this is just a demo.
+void* (*MessageBox_Old)(void*, void*, void*, void*);
+void* MessageBox_Hack(void*, void*, void*, void*)
+{
+	return;
+}
+
+// entry test
+void main(	) 
+{
+	ioctl_hooker::init(	);
+	ioctl_hooker::ioctl_create_hook(MessageBoxA, MessageBox_Hack, &MessageBox_Old);
+
+	// empty box - shouldn't show anything on screen becuase hooked to just return.
+	MessageBoxA(0, 0, 0, 0);
+
+	// old box function - should appear
+	MessageBox_Old(0, "IOCTLCHEATS RATTED FOR THIS", 0, 0);
+}
